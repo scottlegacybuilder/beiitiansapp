@@ -1,0 +1,288 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Key and Solution</title>
+     <meta name="viewport" content="width=320; user-scalable=no" />
+    <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="phonegap-1.4.1.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/OptionsMenu.js"></script>
+    <link href="css/mexamcss.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript">
+        var TotalQuestions = 0;  var UserId = 0,  MasterId = 0, ExmTyp = 0;
+        $(document).ready(function () {
+        	
+        	 var QueryString = window.location.href.slice(window.location.href.indexOf('?') + 1).split('?');
+             var ObjectCollection = QueryString[0].split('&');
+             var AUserId = ObjectCollection[0].split('=');  UserId = AUserId[1];
+             var masterid = ObjectCollection[1].split('=');  MasterId = masterid[1];
+             var ExamType = ObjectCollection[2].split('=');  ExmTyp = ExamType[1];
+             
+             
+            KeySol();
+            onLoad();
+            
+        });
+        function KeySol() {
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/KeyAndSolution",
+                data: "{UserId: '" + UserId + "',ExamID:'" + MasterId + "',TypeID:'" + ExmTyp + "'}",
+                datatype: "jsonp",
+                async: false,
+                success: function (data) {
+                    var KeySol = "";
+                    var QnoCount = 0;
+                    var C1 = '', C2 = '', C3 = '', C4 = '';
+                    TotalQuestions = data.d.length;
+                    $.each(data.d, function (key, value) {
+                        QnoCount = parseInt(QnoCount) + 1;
+                        if (value.AttemptedAnsId == '') {
+                        	
+                        	if (value.CorrectAndId == value.OP1)
+                        		 C1 = 'sected_option';
+                        	
+                        	if (value.CorrectAndId == value.OP2)
+                       		 C2 = 'sected_option';
+                        	
+                        	if (value.CorrectAndId == value.OP3)
+                       		 C3 = 'sected_option';
+                        	
+                        	if (value.CorrectAndId == value.OP4)
+                       		 C4 = 'sected_option';
+                        	
+                        	
+                        	
+                        }
+                        else {
+                            if (value.AttemptedAnsId == value.CorrectAndId) {
+                                if (value.AttemptedAnsId == value.OP1)
+                                    C1 = 'sected_option';
+                                else if (value.AttemptedAnsId == value.OP2)
+                                    C2 = 'sected_option';
+                                else if (value.AttemptedAnsId == value.OP3)
+                                    C3 = 'sected_option';
+                                else if (value.AttemptedAnsId == value.OP4)
+                                    C4 = 'sected_option';
+                            }
+                            else {
+                            	if (value.AttemptedAnsId == value.OP1)
+                            		C1 = 'error_option';
+
+                            		else if (value.AttemptedAnsId == value.OP2)
+                            		C2 = 'error_option';
+
+                            		else if (value.AttemptedAnsId == value.OP3)
+                            		C3 = 'error_option';
+
+                            		else if (value.AttemptedAnsId == value.OP4)
+                            		C4 = 'error_option';
+
+
+
+                            		if (value.CorrectAndId == value.OP1)
+                            		C1 = 'sected_option';
+                            		else if (value.CorrectAndId == value.OP2)
+                            		C2 = 'sected_option';
+                            		else if (value.CorrectAndId == value.OP3)
+                            		C3 = 'sected_option';
+                            		else if (value.CorrectAndId == value.OP4)
+                            		C4 = 'sected_option';
+
+
+                            }
+                        }
+
+                        KeySol += "<div class='question_ans HideQuestion' id='QNo" + QnoCount + "'>"
+                        KeySol += "<p><strong>Q:" + QnoCount + "</strong></p><p>" + value.QDetails + "</p>"
+                        KeySol += "<ul>"
+                        // KeySol += "<li><a onclick=' return false;' style='cursor: default;' href='#' class='' class='sected_option'class='error_option'>1</a><p></p></li>"
+                        KeySol += "<li><a onclick=' return false;' style='cursor: default;' href='#' class='" + C1 + "'>1</a><p>" + value.OPTION1 + "</p></li>"
+                        KeySol += "<li><a onclick=' return false;' style='cursor: default;' href='#' class='" + C2 + "'>2</a><p>" + value.OPTION2 + "</p></li>"
+                        KeySol += "<li><a onclick=' return false;' style='cursor: default;' href='#' class='" + C3 + "'>3</a><p>" + value.OPTION3 + "</p></li>"
+                        KeySol += "<li><a onclick=' return false;' style='cursor: default;' href='#' class='" + C4 + "'>4</a><p>" + value.OPTION4 + "</p></li>"
+                        KeySol += "</ul>"
+                        KeySol += "<ul class='answer-div'>"
+                        //KeySol += "<li style='height: auto'><strong>Your Answer:- <span></span>&nbsp;</strong><p class='your_answer'></p></li>"
+                        //KeySol += "<li style='height: auto'><strong>Right Answer:- <span></span>&nbsp;</strong><p class='correct_answer'></p></li>"
+                        KeySol += "</ul>"
+                        KeySol += "<div class='solution_box'>"
+                        KeySol += "<div class='solution_tab'>Solution:</div>"
+                        KeySol += "<div class='solution_cont'><p>" + value.Solution + "</p></div></div>"
+                        KeySol += "<div class='nav-menu'><ul>"
+                        KeySol += "<div style='float: left;'>"
+                        KeySol += "<li><a href='#Prev_btn' name='Prev_btn' class='prev_btn' onclick='javascript:OnPrevious()'> <label style='margin-left: 5px;margin-top: 5px;'>Previous</label></a></li></div>"
+                        KeySol += "<div style='float: right;'>"
+                        KeySol += "<li><a href='#Next_btn' name='Next_btn' class='next_btn'  onclick='javascript:OnNext()'> <label style='margin-left: 5px;margin-top: 5px;'>Next</label></a></li></div><br><br><br>"
+                        KeySol += "<div style='float: left;'>"
+                        KeySol += "<li><a href='#Close_btn' name='Close_btn' class='close_btn_key'  onclick='javascript:OnClose()'><label style='margin-left: 5px;margin-top: 5px;'>Close</label></a></li></ul></div></div></div>"
+
+                        C1 = '', C2 = '', C3 = '', C4 = '';
+                    });
+                    $('#DIVkeysol').append(KeySol);
+                    $('#QNo1').removeClass('HideQuestion').addClass('ShowQuestion');
+                },
+                error: function (result) { alert("Error"); }
+            });
+        }
+
+
+        //When previous button clicks
+        function OnPrevious() {
+            var Id = $('.ShowQuestion').attr('id');
+            var StripId = $('.ShowQuestion').attr('id'); //strip
+            $('.active1').removeClass("active1");
+            Id = Id.replace('QNo', ''); //Id = Id.replace('QNo', '');
+            Id = parseInt(Id) - 1;
+
+            if (Id != 0) {
+                $('.ShowQuestion').removeClass('ShowQuestion').addClass('HideQuestion');
+                $('#QNo' + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#Strip" + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#question" + Id).addClass("active1");
+                //Strip
+            }
+            if (Id == 1)
+                $('.prev_btn').css('display', 'none');  //Disable previous button
+            $('.next_btn').css('display', 'block');  //Enable next button
+        }
+        //When next button clicks
+        function OnNext() {
+            $('.prev_btn').css('display', 'block'); //Display previous button
+            var Id = $('.ShowQuestion').attr('id');
+            Id = Id.replace('QNo', '');
+            Id = parseInt(Id) + 1;
+            if (TotalQuestions == Id) { $('.next_btn').css('display', 'none'); }
+            $('.active1').removeClass("active1");
+            if (Id != (parseInt($('#spnQuestionCount').text())) + 0) {
+                $('.ShowQuestion').removeClass('ShowQuestion').addClass('HideQuestion');
+                $('#QNo' + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#Strip" + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#question" + Id).addClass("active1");
+            }
+            else {
+                // Id = parseInt(Id) - 1;
+                $('.ShowQuestion').removeClass('ShowQuestion').addClass('HideQuestion');
+                $('#QNo' + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#question" + Id).addClass("active1");
+            }
+        }
+      //When close button clicks
+        function OnClose(){
+        	//document.location.href = 'mindex.html?userId=' + UserId
+    	  
+        	 showConfirmClose();
+        	
+        }
+  // Show a custom confirmation dialog for close
+        function showConfirmClose() {
+            navigator.notification.confirm(
+                'Are you sure want close!',  // message
+                onConfirmClose,             // callback to invoke with index of button pressed
+                'Alert',            // title
+                'Ok,Cancel'          // buttonLabels
+            );
+         }
+        function onConfirmClose(button) {
+        	  if(button== '1'){
+        		        if(UserId != 0){
+        		             document.location.href = 'mindex.html?userId=' + UserId
+        	                 }
+                    }
+             else if (button== '2'){}
+         }
+        
+function onLoad(){
+        	
+            document.addEventListener("deviceready", onDeviceReady, false);
+            document.addEventListener("backbutton", onBackKeyDown, false);
+            
+            var onhome = function() {
+       	        console.log("settings");
+       	          if(UserId != 0)
+               {
+                  document.location.href = 'mindex.html?userId=' + UserId 
+               }
+       	    };
+       	 
+       	    var onLogout = function() {
+       	       console.log("help");
+       	     document.location.href = 'mLogin.html'
+       	    };
+       	    
+       	    var onExit = function() {
+ 	        console.log("Exit");
+ 	        showConfirm();
+ 	        };
+       	    var optionsmenu = new OptionsMenu({
+       	        id: "optionsmenu",
+       	        items: [ 
+       	            [ {
+       	                label: "Home",
+       	                image: "Mimages/home.png",
+       	                action: onhome
+       	            }, 
+       	            {
+       	                label: "logOut",
+       	                image: "Mimages/logout.png",
+       	                action: onLogout
+       	            },
+       	            {
+    	                label: "Exit",
+    	                image: "Mimages/close.png",
+    	                action: onExit
+    	            }]
+       	        ]
+       	    });
+            
+             }
+
+        // PhoneGap is loaded and it is now safe to make calls PhoneGap methods
+        function onDeviceReady() {
+            // Register the event listener
+            document.addEventListener("menubutton", onMenuKeyDown, false);
+            document.addEventListener("backbutton", onBackKeyDown, false);
+           
+        }
+
+        // Handle the menu button
+        //
+        function onMenuKeyDown() {
+        	
+        }
+        
+        function onBackKeyDown() {
+        	
+        	showConfirmClose();
+        	//document.location.href = 'mindex.html?userId=' + UserId
+        }
+        
+        // Show a custom confirmation dialog
+        //
+        function showConfirm() {
+            navigator.notification.confirm(
+                'Are you sure want exit the app',  // message
+                onConfirm,             // callback to invoke with index of button pressed
+                'Alert',            // title
+                'Ok,Cancel'          // buttonLabels
+            );
+        }
+        function onConfirm(button) {
+       	 if(button== '1')
+         	   navigator.app.exitApp();
+            else if (button== '2'){}
+       }
+        
+    </script>
+</head>
+<body>
+    <div style="width: 100%; margin: 0px;">
+        <div align="center" class='logo_div'>
+            <img src="Mimages/beiitianslogo.png" alt="logo" />
+        </div>
+        <div id='DIVkeysol' style="float: left; background-color: White; border: 1px solid black;
+            margin: 1px 2px 2px 2px;">
+        </div>
+    </div>
+</body>
+</html>

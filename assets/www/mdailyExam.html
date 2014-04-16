@@ -1,0 +1,295 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>DailyExam</title>
+     <meta name="viewport" content="width=320; user-scalable=no" />
+     <script type="text/javascript" charset="utf-8" src="phonegap-1.4.1.js"></script>
+    <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+     <script type="text/javascript" charset="utf-8" src="js/OptionsMenu.js"></script>
+    <link rel="stylesheet" href="css/mobileUI.css" />
+    <script type="text/javascript">
+        var varStudentId = 0, ExmTyp = '';
+        $(document).ready(function () {
+        	$('#loading').css('display','none');
+        	$('select').removeAttr('disabled');
+        	$('input').removeAttr('disabled');
+        	var QueryString = window.location.href.slice(window.location.href.indexOf('?') + 1).split('?');
+            var ObjData = QueryString[0].split('&');
+            var UserId=ObjData[0].split('=');
+            var ExmType=ObjData[1].split('=');
+            varStudentId = UserId[1];
+            ExmTyp=ExmType[1];
+            fnmGetClassDetails();
+            onLoad();
+        });
+        //Function for getting class information of student
+        function fnmGetClassDetails() {
+            $("#ddlTopic").children().remove();
+            $("#ddlClass").find('option').remove().end(); $("#ddlSubject").find('option').remove().end(); //$('#ddlClass').append($("<option></option>").val('0').html('Select'));
+            $('#ddlSubject').append($("<option></option>").val('0').html('Select'));
+            $('#ddlChapter').append($("<option></option>").val('0').html('Select'));
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/GetDailyExam",
+                data: "{userId: '" + varStudentId + "'}",
+                datatype: "jsonp",
+                async: false,
+                success: function (data) {
+                    $.each(data.d, function (key, value) {
+                        if (value.ObjectType == '1') {
+                            $("#ddlClass").append($("<option></option>").val(value.ObjectID).html(value.ObjectName));
+                        }
+                        else {
+                            $("#ddlSubject").append($("<option></option>").val(value.ObjectID).html(value.ObjectName));
+                        }
+                    });
+                },
+                error: function (result) { alert("Error"); }
+            });
+        }
+        //Function for getting chapters based on class and subject
+        function fnmGetChapterData() {
+            $("#ddlTopic").children().remove();
+            $("#ddlChapter").find('option').remove().end();
+            $('#ddlChapter').append($("<option></option>").val('0').html('Select'));
+            if ($('#ddlSubject').val() == '0')
+                return false;
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/GetChapterData",
+                data: "{userId: '" + varStudentId + "',SubjectId: '" + $('#ddlSubject').val() + "',ChapterId: '" + -1 + "'}",
+                datatype: "jsonp",
+                async: false,
+                success: function (data) {
+                    $.each(data.d, function (key, value) {
+                        $("#ddlChapter").append($("<option></option>").val(value.ObjectID).html(value.ObjectName));
+                    });
+                },
+                error: function (result) { alert("Error"); }
+            });
+        }
+        //Function for getting Topic based on class,subject and chapter
+        function fnmGetTopicData() {
+            $("#ddlTopic").children().remove();
+            if ($('#ddlChapter').val() == '0')
+                return false;
+            var varTopicDiv = '';
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/GetChapterData",
+                data: "{userId: '" + varStudentId + "',SubjectId: '" + $('#ddlSubject').val() + "',ChapterId: '" + $("#ddlChapter").val() + "'}",
+                datatype: "jsonp",
+                async: false,
+                success: function (data) {
+                    $.each(data.d, function (key, value) {
+                    	varTopicDiv += "<div id='divtopic-" + value.ObjectID + "' class='DeactiveTopic' onclick='javascript:fnmselectTopic(this.id)' >" + value.ObjectName + "</div>"
+                    });
+                    $('#ddlTopic').append(varTopicDiv);
+                },
+                error: function (result) { alert("Error"); }
+            });
+        }
+      //Change topic selection
+        function fnmselectTopic(topicid) {
+            if ($('#' + topicid).hasClass('ActiveTopic')) {
+                $('#' + topicid).removeClass('ActiveTopic').addClass('DeactiveTopic');
+            }
+            else {
+                $('#' + topicid).removeClass('DeactiveTopic').addClass('ActiveTopic');
+            }
+        }
+        //Function for get exam
+        function GetExam() {        	        	
+        	
+        	if ($('#ddlSubject').val() == 0) {
+                alert("Select Subject");
+                return false;
+            }
+            else if ($('#ddlChapter').val() == 0) {
+                alert("Select Chapter");
+                return false;
+            }
+            else if (!$('#ddlTopic').children().hasClass('ActiveTopic')) {
+                alert("Select Topics");
+                return false;
+            }
+            else if ($('#ddlQCount').val() == 0) {
+                alert("Select Question Count");
+                return false;
+            }
+        	$('#loading').css('display','block');
+        	$('select').attr('disabled','disabled');
+        	$('input').attr('disabled','disabled');
+            var SelectedSubject = $('#ddlSubject').val();
+            var SelectedChapter = $('#ddlChapter').val();
+            var topicids = "";
+            $('#ddlTopic').children().each(function () {
+                if ($(this).hasClass('ActiveTopic')) {
+                    var id = $(this).attr('id');
+                    var curid = id.split("-");
+                    topicids += curid[1] + ",";
+                }
+            });
+            topicids = topicids.slice(0, -1)
+            var QuestionCount = $('#ddlQCount').val();
+            document.location.href = 'moExam.html?userId=' + varStudentId+'&SubjectId='+$('#ddlSubject').val()+'&ChapterId='+$('#ddlChapter').val()+'&TopicId='+topicids+'&QCount='+$('#ddlQCount').val();
+        
+        }
+        
+        
+ function onLoad() {
+        	
+            document.addEventListener("deviceready", onDeviceReady, false);
+            
+             }
+
+        // PhoneGap is loaded and it is now safe to make calls PhoneGap methods
+        //
+        function onDeviceReady() {
+            // Register the event listener
+            document.addEventListener("menubutton", onMenuKeyDown, false);
+            document.addEventListener("backbutton", onBackKeyDown, false);
+            
+            
+            var onhome = function() {
+       	        console.log("settings");
+       	       
+       	          if(varStudentId != 0)
+               {
+                  document.location.href = 'mindex.html?userId=' + varStudentId 
+               }
+       	    };
+       	 
+       	    var onLogout = function() {
+       	        console.log("help");
+       	     document.location.href = 'mLogin.html'
+       	    };
+       	    
+       	 var onExit = function() {
+ 	        console.log("Exit");
+ 	        showConfirm();
+ 	    };
+       	 
+       	    var optionsmenu = new OptionsMenu({
+       	        id: "optionsmenu",
+       	        items: [ 
+       	            [ {
+       	                label: "Home",
+       	                image: "Mimages/home.png",
+       	                action: onhome
+       	            }, 
+       	            {
+       	                label: "logOut",
+       	                image: "Mimages/logout.png",
+       	                action: onLogout
+       	            },
+       	            {
+    	                label: "Exit",
+    	                image: "Mimages/close.png",
+    	                action: onExit
+    	            }]
+       	        ]
+       	    });
+            
+        }
+
+        // Handle the menu button
+        //
+        function onMenuKeyDown() {
+        	
+        }
+        
+        function onBackKeyDown() {
+        	
+        	$('#loading').css('display','block');
+        	$('select').attr('disabled','disabled');
+        	$('input').attr('disabled','disabled');
+        	
+        	document.location.href = 'mindex.html?userId=' + varStudentId
+        }
+        
+        // Show a custom confirmation dialog
+        //
+        function showConfirm() {
+            navigator.notification.confirm(
+                'Are you sure want exit the app',  // message
+                onConfirm,             // callback to invoke with index of button pressed
+                'Alert',            // title
+                'Ok,Cancel'          // buttonLabels
+            );
+        }
+        function onConfirm(button) {
+       	 if(button== '1')
+         	   navigator.app.exitApp();
+            else if (button== '2'){}
+       }
+        
+ </script> 
+ </head>
+
+<body class="background">
+ 
+
+    
+   <div align="center" class='logo_div'>
+            <img src="Mimages/beiitianslogo.png" alt="logo" />
+        </div>
+
+<div align="left" style="padding-left: 10%; padding-top: 10%;margin-bottom: 10%">
+    
+    <div align="left">
+    <label>Class:</label>
+    </div>
+
+    <div class="dropdownlist">
+       <select id='ddlClass' class="dropdownlist"></select>
+    </div>
+    
+    <div align="left">
+    <label>Subject:</label>
+    </div>
+    
+    <div class="dropdownlist">
+    <select id='ddlSubject' class="dropdownlist" onchange='javascript:fnmGetChapterData()'></select>
+    </div>
+    
+    <div align="left">
+    <label>Chapter:</label>
+    </div>
+    <div class="dropdownlist">
+    <select id='ddlChapter' class="dropdownlist" onchange='javascript:fnmGetTopicData()'></select>
+    </div>
+    
+    <div align="left">
+    <label>Topics:</label>
+    </div>
+    <div class="dropdownlist">
+       <div id='ddlTopic' class="topicDropdown">
+       </div>
+    </div>
+    
+    <div align="left">
+    <label>No. of Questions:</label>
+    </div>
+    <div class="dropdownlist">
+      <select id='ddlQCount' class="dropdownlist">
+        <option value='0'>Select</option>
+        <option value='5'>5</option>
+        <option value='10'>10</option>
+      </select>
+    </div>
+    <div id="loading" class="loadingdiv">
+           <span class="loadingtext">Please wait...</span>               
+    </div>
+
+   <div align="center" class="span3" style="padding-top: 10%; padding-bottom: 15%">
+    <input type="button" id='btnGetTest' value='Submit'  class="btn"  onclick='javascript:GetExam()' />
+   </div>
+
+</div>
+
+</body>
+</html>

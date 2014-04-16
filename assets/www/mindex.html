@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+     <meta name="viewport" content="width=320; user-scalable=no" />
+     <script type="text/javascript" charset="utf-8" src="phonegap-1.4.1.js"></script>
+    <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/OptionsMenu.js"></script>
+    <link rel="stylesheet" href="css/mobileUI.css" />
+    <script type="text/javascript">
+    var varLoginUserId = 0;
+        $(document).ready(function () {
+        	$('#loading').css('display','none');
+        	$('button').removeAttr('disabled');
+            var QueryString = window.location.href.slice(window.location.href.indexOf('?') + 1).split('?');
+            var UserId = QueryString[0].split('=');
+            varLoginUserId = UserId[1];
+            GetLoginDetails(UserId[1]);
+            onLoad();
+            
+        });
+        
+        function GetLoginDetails(userId) {
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/GetmobileUserInfo",
+                data: "{userId: '" + userId + "'}",
+                datatype: "jsonp",
+                async: false,
+                success: function (data) {
+                    $.each(data.d, function (key, value) {
+                        $('#spnuname').text(value.UserName);
+                        $('#spnlogin').text(value.Login);
+                    });
+                },
+                error: function (result) { alert("Error"); }
+            });
+        }
+       
+      //Navigate to exam page
+        function fnmGoExam(examtype) {
+        	$('#loading').css('display','block');
+        	$('button').attr('disabled','disabled');
+        if (examtype == '1')
+                 {
+       			 document.location.href = 'mdailyExam.html?userId=' + varLoginUserId +'&Examid=1';
+                 }
+        else if (examtype == '2') 
+                 {
+    	         document.location.href = 'mPractice.html?userId=' + varLoginUserId +'&Examid=2';
+		
+	             }
+        else if (examtype == '3')  
+                {
+        	     document.location.href = 'mPractice.html?userId=' + varLoginUserId +'&Examid=3';
+		        }
+      }
+       
+     
+        function onLoad() {
+           	document.addEventListener("deviceready", onDeviceReady, false);
+            document.addEventListener("backbutton", onBackKeyDown, false);
+           	
+            var onhome = function() {
+       	        console.log("settings");
+       	          if(varLoginUserId != 0)
+               {
+                  document.location.href = 'mindex.html?userId=' + varLoginUserId 
+               }
+       	    };
+       	 
+       	    var onLogout = function() {
+       	        console.log("help");
+       	     document.location.href = 'mLogin.html'
+       	    };
+       	    
+       	 var onExit = function() {
+    	        console.log("Exit");
+    	       
+    	        showConfirm();
+    	    };
+       	 
+       	    var optionsmenu = new OptionsMenu({
+       	        id: "optionsmenu",
+       	        items: [ 
+       	            [ {
+       	                label: "Home",
+       	                image: "Mimages/home.png",
+       	                action: onhome
+       	            }, 
+       	            {
+       	                label: "logOut",
+       	                image: "Mimages/logout.png",
+       	                action: onLogout
+       	            },
+       	            {
+    	                label: "Exit",
+    	                image: "Mimages/close.png",
+    	                action: onExit
+    	            }]
+       	        ]
+       	    });
+           	
+           	
+           }
+
+       // PhoneGap is loaded and it is now safe to make calls PhoneGap methods
+       //
+       function onDeviceReady() {
+           // Register the event listener
+           document.addEventListener("menubutton", onMenuKeyDown, false);
+           document.addEventListener("backbutton", onBackKeyDown, false);
+           
+       }
+
+      
+       function onMenuKeyDown() {
+       	
+       }
+       
+       function onBackKeyDown() {
+    	   
+    	   showConfirm();
+       	
+       }
+       
+       // Show a custom confirmation dialog
+       //
+       function showConfirm() {
+           navigator.notification.confirm(
+               'Are you sure want exit the app',  // message
+               onConfirm,             // callback to invoke with index of button pressed
+               'Alert',            // title
+               'Ok,Cancel'          // buttonLabels
+           );
+       }
+       
+       function onConfirm(button) {
+    	    
+    	   if(button== '1')
+        	   navigator.app.exitApp();
+           else if (button== '2'){}
+       }
+
+    </script>
+</head>
+<body class="background">
+    <div>
+        <div align="center" class='logo_div'>
+            <img src="Mimages/beiitianslogo.png" alt="logo" />
+        </div>
+        <div style="float: right;">
+            <label class="font">Welcome</label>
+            <span id='spnuname'></span>
+            <br>
+        </div>
+       
+        <div class="container-fluid" style="margin-top: 30%; margin-bottom: 30%; ">
+        	<div id="loading" class="loadingdiv">
+                 <span class="loadingtext">Please wait...</span>               
+            </div>
+            <div class="row-fluid">
+                <div class="span12">
+                    
+                    <button class="btn" type="button" onclick="javascript:fnmGoExam('1')">
+                        <img src="Mimages/daily_practice_icon.png" alt="Daily" />
+                        Daily Test</button>
+                        
+                       
+                    <button class="btn" type="button" onclick="javascript:fnmGoExam('2')">
+                        <img src="Mimages/weekly_test.png" alt="Weekly" />
+                        Weekly Test</button>
+                        
+                       
+                    <button class="btn" type="button"  onclick="javascript:fnmGoExam('3')">
+                        <img src="Mimages/live_test.png" alt="Monthly" />
+                        Monthly Test</button>
+                </div>
+            </div>
+        </div>
+    
+ </div>
+</body>
+</html>

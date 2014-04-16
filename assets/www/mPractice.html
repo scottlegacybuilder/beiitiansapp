@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+     <meta name="viewport" content="width=320; user-scalable=no" />
+    <script type="text/javascript" charset="utf-8" src="phonegap-1.4.1.js"></script>
+    <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+     <script type="text/javascript" charset="utf-8" src="js/OptionsMenu.js"></script>
+    <link rel="stylesheet" href="css/mobileUI.css" />
+    <script type="text/javascript">
+    var Usr="",ExmTyp="",ExamLive="", WNextExam="",MNextExam="";
+        $(document).ready(function () {
+        	$('#loading').css('display','none');
+        	$('button').removeAttr('disabled');
+        	var QueryString = window.location.href.slice(window.location.href.indexOf('?') + 1).split('?');
+        	var ObjectData = QueryString[0].split('&');
+        	var UserId=ObjectData[0].split('=');
+        	var ExamType=ObjectData[1].split("=");
+        	Usr=UserId[1];ExmTyp=ExamType[1];        	
+        	var ObjectExamType = ObjectData[1].split('=');
+        	
+        	
+        	if(ObjectExamType[1]=='2')        		
+        	{                    		
+        		$('#divMonthExam').css('display','none');
+        		$('#divWeekExam').css('display','block');   
+        		MWeekly(Usr,ExmTyp);        	
+        	}
+        	else if(ObjectExamType[1]=='3')
+        	{
+        	    $('#divWeekExam').css('display','none');
+        	    $('#divMonthExam').css('display','block');   
+        	    MMonthly(Usr,ExmTyp);
+        	} 
+        	
+        	onLoad();
+        });
+        
+        function GetLoginDetails(userId) {
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/GetmobileUserInfo",
+                data: "{userId: '" + userId + "'}",
+                datatype: "json",
+                async: false,
+                success: function (data) {
+                    $.each(data.d, function (key, value) {
+                        $('#spnuname').text(value.UserName);
+                        $('#spnlogin').text(value.Login);
+                    });
+                },
+                error: function (result) { alert("Error"); }
+            });
+        }
+        function MWeekly(Usr,ExmTyp) {
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/mGetWeekMonthSyllabus",
+                data: "{userId: '" + Usr +"',ExamType:'" + ExmTyp + "'}",
+                datatype: "json",
+                async: false,
+                success: function (data) 
+				       {
+                	    if (data.d.length > 0) 
+					         {					
+                                for (var i = 0; i < data.d.length; i++) {						           
+                                    if (data.d[i].TableType == '1') 
+							             {
+                                           $("#tblweekSyllabus").append('<tr><td>' + data.d[i].Subject + '</td><td>' + data.d[i].Chapter + '</td><td>' + data.d[i].Topic + '</td></tr>');
+                                         }
+                                    else {                               
+                                           $("#tblPracticedSyllabus").append('<tr><td>' + data.d[i].Subject + '</td><td>' + data.d[i].Chapter + '</td><td>' + data.d[i].Topic + '</td></tr>');
+                                         }
+							        }
+                              }
+                	$.ajax({
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8",
+                        url: "http://www.beiitians.com/mobile/mobileAjax.aspx/mGetWeeklyExamDateAndCount",
+                        data: "{userId: '" + Usr +"',ExamType:'" + ExmTyp + "'}",
+                        datatype: "json",
+                        async: false,
+                        success: function (data) {
+                        	if (data.d.length > 0) {
+                        		$.each(data.d, function (key, value) {
+                        			
+                        			ExamLive=value.Test;
+    								WNextExam=value.Friday;
+                        			
+                        			 if(ExamLive=='LIVE'){
+                             			   $("#lblweekExamDate").html("WEEKLY Test is <img src='Mimages/Live.gif'/> for you now. Click on Start Test to participate."); 
+                             			  }
+                             			 else 
+                        			       $("#lblweekExamDate").text('The next Weekly test shall be available from'+ value.Friday );
+    								
+                        			 $("#lblweekExamCount").text('ExamCount:'+ value.WeeklyExamCount );
+    								
+                                });
+                               }          
+                           },
+                           error: function (result) { alert("Error"); }
+                	   });
+                    },
+                
+               });
+             }
+        function MMonthly(Usr,ExmTyp){
+        	$.ajax({
+        		type: "POST",
+        		contentType: "application/json; charset=utf-8",
+        		url: "http://www.beiitians.com/mobile/mobileAjax.aspx/mGetWeekMonthSyllabus",
+                data: "{userId: '" + Usr +"',ExamType:'" + ExmTyp + "'}",
+                datatype: "json",
+                async: false,
+                success: function (data) {
+                	if (data.d.length > 0) 
+                		{
+                		for (var i = 0; i < data.d.length; i++){                		
+                			$('#tblMonthSyllabus').append('<tr><td>' + data.d[i].Subject + '</td><td>' + data.d[i].Chapter + '</td></tr>');
+                		}
+                    }
+                $.ajax({
+                	
+                	 type: "POST",
+                     contentType: "application/json; charset=utf-8",
+                     url: "http://www.beiitians.com/mobile/mobileAjax.aspx/mGetWeeklyExamDateAndCount",
+                     data: "{userId: '" + Usr +"',ExamType:'" + ExmTyp + "'}",
+                     datatype: "json",
+                     async: false,
+                     success: function (data) {
+                    	 if (data.d.length > 0)
+                    		 {
+                    		 $.each(data.d, function (key, value) {
+                    			 ExamLive=value.Test;
+                    			 MNextExam=value.Sunday;
+                    			  if(ExamLive=='LIVE'){
+                    			$("#lblweekExamDate").html("MONTHLY Test is <img src='Mimages/Live.gif'/> for you now. Click on Start Test to participate."); 
+                    			 }
+                    			 else 
+                     			$("#lblweekExamDate").text('The next Monthly test shall be available from'+ value.Sunday );
+                    			 
+                     			$("#lblweekExamCount").text('ExamCount:'+ value.MonthlyExamCount );
+                             });
+                    	 }
+					  },
+                      error: function (result) { alert("Error"); }
+                  });	
+                }
+        	});
+        }
+        
+        function mwGetExam(){
+        	$('#loading').css('display','block');
+        	$('button').attr('disabled','disabled');
+        	if(ExamLive=='LIVE'){
+        		document.location.href = 'moWeeklyExam.html?userId=' + Usr + '&ExmTyp=2'
+        	}
+        	else{
+        		alert("Next Exam date:"+ WNextExam);
+        		$('#loading').css('display','none');
+        		return
+        	}
+        		
+        	
+        	/* document.location.href = 'moWeeklyExam.html?userId=' +Usr;         */	
+        	 
+        }
+        
+        function mMGetExam(){
+        	$('#loading').css('display','block');
+        	$('button').attr('disabled','disabled');
+      	  if(ExamLive=='LIVE'){
+      		document.location.href = 'moWeeklyExam.html?userId=' + Usr + '&ExmTyp=3'
+      	  }
+      	  else{
+      		alert("Next Exam date:"+MNextExam);
+      		$('#loading').css('display','none');
+      		return
+        	}
+		}
+        
+ function onLoad() {
+        	
+            document.addEventListener("deviceready", onDeviceReady, false);
+            document.addEventListener("backbutton", onBackKeyDown, false);
+            
+            var onhome = function() {
+       	        console.log("settings");
+       	          if(Usr != 0)
+               {
+                  document.location.href = 'mindex.html?userId=' + Usr 
+               }
+       	    };
+       	 
+       	    var onLogout = function() {
+       	        console.log("help");
+       	     document.location.href = 'mLogin.html'
+       	    };
+       	    
+       	 var onExit = function() {
+ 	        console.log("Exit");
+ 	       
+ 	        showConfirm();
+ 	    };
+    	 
+       	 
+       	    var optionsmenu = new OptionsMenu({
+       	        id: "optionsmenu",
+       	        items: [ 
+       	            [ {
+       	                label: "Home",
+       	                image: "Mimages/home.png",
+       	                action: onhome
+       	            }, 
+       	            {
+       	                label: "logOut",
+       	                image: "Mimages/logout.png",
+       	                action: onLogout
+       	            },
+       	            {
+    	                label: "Exit",
+    	                image: "Mimages/close.png",
+    	                action: onExit
+    	            }]
+       	        ]
+       	    });
+            
+          
+           }
+
+        // PhoneGap is loaded and it is now safe to make calls PhoneGap methods
+        //
+        function onDeviceReady() {
+            // Register the event listener
+            document.addEventListener("menubutton", onMenuKeyDown, false);
+            document.addEventListener("backbutton", onBackKeyDown, false);
+            
+        }
+
+        // Handle the menu button
+        //
+        function onMenuKeyDown() {
+        	
+        }
+        
+        function onBackKeyDown() {
+        	$('#loading').css('display','block');
+        	$('button').attr('disabled','disabled');
+        	document.location.href = 'mindex.html?userId=' + Usr
+        }
+        
+     
+       
+        // Show a custom confirmation dialog
+        //
+        function showConfirm() {
+            navigator.notification.confirm(
+                'Are you sure want exit the app',  // message
+                onConfirm,             // callback to invoke with index of button pressed
+                'Alert',            // title
+                'Ok,Cancel'          // buttonLabels
+            );
+        }
+        
+        function onConfirm(button) {
+        	 if(button== '1')
+          	   navigator.app.exitApp();
+             else if(button== '2'){}
+        }
+
+    </script>
+</head>
+<body class="background">
+ 
+        <div align="center" class='logo_div'>
+            <img src="Mimages/beiitianslogo.png" alt="logo" />
+        </div>
+        <label id="lblweekExamCount" class="clsExamCount">
+        </label>
+        <br>
+        
+        <label id="lblweekExamDate" class="clsExamDate">
+        </label>
+      <!--   <label id="lblweekExamDateLive" class="clsExamDate">
+        </label> -->
+        
+        <div id="divWeekExam" style="padding-top: 5%; margin-bottom: 20%; width: 100%; height: 100%;">
+            <div id="divWeeklySyl" align="center" style="padding-top: 23%; width: 100%;">
+                <label style="color: blue;"><b>
+                    Syllabus For The Week</b></label>
+                <table id="tblweekSyllabus" class="table table-condensed" border="1">
+                    <thead>
+                        <tr class="success">
+                            <th>
+                                Subject
+                            </th>
+                            <th>
+                                Chapters
+                            </th>
+                            <th>
+                                Topics
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div id="divWeeklyPractice" align="center" style="padding-top: 10%">
+                <label style="color: blue;"><b>
+                    Practiced Chapters</b></label>
+                <table id="tblPracticedSyllabus" class="table table-condensed" border="1">
+                    <thead>
+                        <tr class="success">
+                            <th>
+                                Subject
+                            </th>
+                            <th>
+                                Chapters
+                            </th>
+                            <th>
+                                Topics
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            
+            <div id="loading" class="loadingdiv">
+           		<span class="loadingtext">Please wait...</span>               
+    		</div>
+            
+            <div class='label_div3' align="right">
+                <input type="button" id='btnweekExamstart' value='Start Test' class="btn" onclick="javascript:mwGetExam()" />
+            </div>
+        </div>
+        <div id="divMonthExam" style="padding-top: 5%;">
+            <div id="divMonthlySyl" align="center">
+                <label style="color: blue;"><b>
+                    Syllabus For The Month </b></label>
+                <table id="tblMonthSyllabus" class="table table-condensed" border="1">
+                    <thead>
+                        <tr class="success">
+                            <th>
+                                Subject
+                            </th>
+                            <th>
+                                Chapters
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div id="loading" class="loadingdiv">
+           		<span class="loadingtext">Please wait...</span>               
+    		</div>
+            <div class='label_div3' style="padding-top: 10%">
+                <input type="button" id='btnmonthExamstart' value='Start Test' class="btn" onclick="javascript:mMGetExam()" />
+            </div>
+        </div>
+    
+   
+</body>
+</html>

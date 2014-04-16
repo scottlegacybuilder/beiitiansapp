@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+     <meta name="viewport" content="width=320; user-scalable=no" />
+     <script type="text/javascript" charset="utf-8" src="phonegap-1.4.1.js"></script>
+    <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+     <script type="text/javascript" charset="utf-8" src="js/OptionsMenu.js"></script>
+    <link rel="stylesheet" href="css/mobileUI.css" />
+    <script type="text/javascript">
+        var UserId = 0; var Master = 0;
+        $(document).ready(function () {
+        	$('#loading').css('display','none');
+        	$('button').removeAttr('disabled');
+            var QueryString = window.location.href.slice(window.location.href.indexOf('?') + 1).split('?');
+            var ObjectCollection = QueryString[0].split('&');
+            var AUserId = ObjectCollection[0].split('='); UserId = AUserId[1];
+            var AMasterId = ObjectCollection[1].split('='); Master = AMasterId[1];
+            GetLoginDetails(UserId);
+            ScoreCard(Master);
+            onLoad();
+        });
+        function GetLoginDetails(UserId) {
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/GetmobileUserInfo",
+                data: "{userId: '" + UserId + "'}",
+                datatype: "jsonp",
+                async: false,
+                success: function (data) {
+                    $.each(data.d, function (key, value) {
+                        $('#spnuname').text(value.UserName);
+                        $('#spnlogin').text(value.Login);
+                    });
+                },
+                error: function (result) { alert("Error"); }
+            });
+        }
+
+
+        function ScoreCard() {
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/mSCHReportScoreCard",
+                data: "{MasterId: '" + Master + "'}",
+                datatype: "jsonp",
+                async: false,
+                success: function (data) {
+                    if (data.d.length > 0) {
+                        for (var i = 0; i < data.d.length; i++) {
+                            $('#ChapterNames').text(data.d[i].ChapterName);
+                            $('#TopicNames').text(data.d[i].TopicName);
+                            $("#tblResult").append('<tr><td>' + data.d[i].TotalQuestions + '</td><td>' + data.d[i].AttemptedQuestions + '</td><td>' + data.d[i].CorrectAnswerQuestions + '</td><td>' + data.d[i].InCorrectAnswer + '</td><td>' + data.d[i].UnAttemptedQuestions + '</td><td>' + data.d[i].TotalQuestions*3 + '</td><td>' + data.d[i].CorrectAnswerQuestions*3 + '</td></tr>');
+                            
+                        }
+                    }
+                },
+                error: function (result) { alert("Error"); }
+            });
+        }
+        
+      function Keysol() {
+    	  $('#loading').css('display','block');
+      	$('button').attr('disabled','disabled');
+    	 
+                  if(UserId != 0){
+                    document.location.href = 'mkeysol.html?userId=' + UserId +'&MasterId=' + Master + '&ExamType=1'
+                  }
+	          }  
+        
+
+ function onLoad() {
+        	
+            document.addEventListener("deviceready", onDeviceReady, false);
+            document.addEventListener("backbutton", onBackKeyDown, false);
+            
+     // creating menu buttons
+            
+            var onhome = function() {
+       	        console.log("settings");
+       	          if(UserId != 0)
+               {
+                  document.location.href = 'mindex.html?userId=' + UserId
+               }
+       	    };
+       	 
+       	    var onLogout = function() {
+       	        console.log("help");
+       	     document.location.href = 'mLogin.html'
+       	    };
+       	    
+       	    var onExit = function() {
+ 	        console.log("Exit");
+ 	       
+ 	        showConfirm();
+ 	    };
+       	 
+       	    var optionsmenu = new OptionsMenu({
+       	        id: "optionsmenu",
+       	        items: [ 
+       	            [ {
+       	                label: "Home",
+       	                image: "Mimages/home.png",
+       	                action: onhome
+       	            }, 
+       	            {
+       	                label: "logOut",
+       	                image: "Mimages/logout.png",
+       	                action: onLogout
+       	            },
+       	         {
+    	                label: "Exit",
+    	                image: "Mimages/close.png",
+    	                action: onExit
+    	            }]
+       	        ]
+       	    });
+         }
+
+        // PhoneGap is loaded and it is now safe to make calls PhoneGap methods
+        //
+        function onDeviceReady() {
+            // Register the event listener
+            document.addEventListener("menubutton", onMenuKeyDown, false);
+            document.addEventListener("backbutton", onBackKeyDown, false);
+           
+       
+            
+        }
+
+        // Handle the menu button
+        
+        function onMenuKeyDown() {
+        	
+        }
+        
+        function onBackKeyDown() {
+        	document.location.href = 'mindex.html?userId=' + UserId
+        }
+        function Home() {
+            if(UserId != 0)
+            {
+               document.location.href = 'mindex.html?userId=' + UserId
+            }
+        }
+        
+       
+
+        // Show a custom confirmation dialog
+        
+        function showConfirm() {
+            navigator.notification.confirm(
+                'Are you sure want exit the app',  // message
+                onConfirm,             // callback to invoke with index of button pressed
+                'Alert',            // title
+                'Ok,Cancel'          // buttonLabels
+            );
+        }
+        
+        function onConfirm(button) {
+        	 if(button== '1')
+          	   navigator.app.exitApp();
+             else (button== '2')
+        }
+			
+		
+      
+    </script>
+</head>
+<body class="background">
+    
+        <div align="center" class='logo_div'>
+            <img src="Mimages/beiitianslogo.png" alt="logo" />
+        </div>
+        <div style="float: right;">
+            <label class="font">Welcome</label>
+            <span id='spnuname'></span>
+        </div>
+        <div align="left" style ="padding-left: 5px; padding-top: 30px">
+            <span><b>Result & Score Card:</b></span>
+        </div>
+        <div align="left" style ="padding-left: 5px; padding-top: 25px">
+        <label>
+            Chapters :
+        </label>
+        <label id="ChapterNames">
+        </label>
+        </div>
+        <div align="left" style ="padding-left: 5px; padding-top: 25px">
+        <label>
+            Topics :
+        </label>
+        <label id="TopicNames">
+        </label>
+        </div>
+        <div id="divResult" style="padding-top: 10%; margin-bottom: 20%">
+            <div align="center">
+                <table id="tblResult" class="table table-condensed" border="1">
+                    <thead>
+                        <tr class="success">
+                            <th>
+                                TQ
+                            </th>
+                            <th>
+                                AQ
+                            </th>
+                            <th>
+                                CA
+                            </th>
+                            <th>
+                                IA
+                            </th>
+                            <th>
+                                UA
+                            </th>
+                            <th>
+                                TotM
+                            </th>
+                            <th>
+                                ScM
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div id="loading" class="loadingdiv" style="float: left;padding-left: 10px; ">
+                 <span class="loadingtext">Please wait...</span>               
+            </div>
+            
+            <div class='span2' style="float:left; padding-left:10px; padding-top: 20px">
+                <input type="button" id='btnClose' value='Close' class="btn" onclick="javascript:Home()" />
+            </div>
+            <div class='span2' style="float: right;padding-right: 10px;padding-top: 20px">
+                <input type="button" id='btnKey' value='Key&Sol' class="btn" onclick="javascript:Keysol()" />
+            </div>
+        </div>
+        
+
+</body>
+</html>

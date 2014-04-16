@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Mobile Exam Page</title>
+     <meta name="viewport" content="width=320; user-scalable=no" />
+    <script type="text/javascript" charset="utf-8" src="phonegap-1.4.1.js"></script>
+    <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/OptionsMenu.js"></script>
+    <link href="css/mexamcss.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript">
+        var UsrId = 0, SubjectId = 0, ChapterId = 0, Topicid = '', TotalQuestions = 0, MasterId = 0, TotalQuestions = 0, seconds = '60', minutes = '4', hours = '1', timevalue = '';
+        var varExamSubmit = ''; var ExmTyp = 0;var examtypeid;
+        $(document).ready(function () {
+        	$('.loadingdiv').css('display','block');
+        	$('button').removeAttr('disabled');
+            var QueryString = window.location.href.slice(window.location.href.indexOf('?') + 1).split('?');
+            var Objectdata= QueryString[0].split('&');
+            var UserID=Objectdata[0].split('=');
+            UsrId=UserID[1];
+            var ExamType=Objectdata[1].split('=');
+            ExmTyp=ExamType[1];
+            
+            if(ExmTyp==3){examtypeid=1;}
+            else {examtypeid=ExmTyp;}
+            FillQuestions();
+            onLoad();
+          
+        });
+        function FillQuestions() {
+            var QuestionBody = "";
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: "http://www.beiitians.com/mobile/mobileAjax.aspx/GetWeekMonthQuestion",
+                data: "{UserID:'" + UsrId + "',TypeID:'" + examtypeid + "'}",
+                datatype: "json",
+                async: false,
+                success: function (data) {
+                    var QnoCount = 0;
+                    TotalQuestions = 0;
+                    TotalQuestions = data.d.length;
+                    $.each(data.d, function (key, value) {
+                        if (MasterId == 0)
+                            MasterId = value.MasterId;
+                        if (timevalue == '')
+                            timevalue = value.TotTime;
+                        QnoCount = parseInt(QnoCount) + 1;
+
+                        QuestionBody += " <div class='question_ans HideQuestion' id='QNo" + QnoCount + "' > "
+                       // QuestionBody += "<div><label><strong>  QId:" + value.QuestionId + " </strong></label></div>" 
+                        QuestionBody += "<label><strong>QNo" + QnoCount + ":</strong> " + value.QuestionText + "</label>"
+
+                        QuestionBody += "<ul><li><a id='ANS-" + QnoCount + "-Option1' onclick='javascript:ChangeOptionColor(this.id)' accesskey=" + value.MasterId + "," + UsrId + "," + value.SourceId + "," + value.IsCorrect1 + "," + value.OptionId1 + " >1</a><p>" + value.OPTION1 + "</p></li>" //'ANS-' + QnoCount + '-Option1' 
+                        QuestionBody += "<li style='margin-top: 3px;'><a id='ANS-" + QnoCount + "-Option2' onclick='javascript:ChangeOptionColor(this.id)' accesskey=" + value.MasterId + "," + UsrId + "," + value.SourceId + "," + value.IsCorrect2 + "," + value.OptionId2 + "  >2</a><p>" + value.OPTION2 + "</p></li>"
+                        QuestionBody += "<li style='margin-top: 3px;'><a id='ANS-" + QnoCount + "-Option3' onclick='javascript:ChangeOptionColor(this.id)' accesskey=" + value.MasterId + "," + UsrId + "," + value.SourceId + "," + value.IsCorrect3 + "," + value.OptionId3 + ">3</a><p>" + value.OPTION3 + "</li>"
+                        QuestionBody += "<li style='margin-top: 3px;'><a id='ANS-" + QnoCount + "-Option4' onclick='javascript:ChangeOptionColor(this.id)' accesskey=" + value.MasterId + "," + UsrId + "," + value.SourceId + "," + value.IsCorrect4 + "," + value.OptionId4 + ">4</a><p>" + value.OPTION4 + "</p></li></ul>"
+
+                        QuestionBody += "<div class='nav-menu'>"
+                        QuestionBody += "<ul><li style='width: 70px;'><a href='#' name='Prev_btn' class='prev_btn' onclick='javascript:OnPrevious()' > <label style='margin-left: 5px;margin-top: 5px;'>Previous</label></a> </li>"
+                        QuestionBody += "<li style='width: 70px;'><a href='#' name='Next_btn' class='next_btn' onclick='javascript:OnNext()'> <label style='margin-left: 5px;margin-top: 5px;'>Next</label></a> </li><br><br>"
+                        QuestionBody += "<li style='width: 70px;'><a href='#Finesh' name='Finish_btn' class='finish_btn' onclick='javascript:ExamSubmit()'> <label style='margin-left: 5px;margin-top: 5px;'>Finish</label></a></li>"
+                        QuestionBody += "<li style='width: 70px;'><a href='#Close_btn' name='Close_btn' class='close_btn' onclick='javascript:OnClose()'> <label style='margin-left: 5px;margin-top: 5px;'>Close</label></a></li></ul></div>"
+                        QuestionBody += "<div class='review-btn'></div>"
+                        	QuestionBody += "<div id='loading' class='loadingdiv'><span class='loadingtext'>Please wait...</span></div></div>"
+
+                        $('#DIVAssignQInfo').append(QuestionBody);
+                        QuestionBody = '';
+                    });
+                    var Arraytimevalue = timevalue.split(':');
+                    hours = Arraytimevalue[0];
+                    minutes = Arraytimevalue[1];
+                    seconds = Arraytimevalue[2];
+                    display();
+
+                    $('#QNo1').removeClass('HideQuestion').addClass('ShowQuestion');
+                },
+                error: function (result) { alert("Error"); }
+            });
+        }
+        function display() {
+            if (seconds <= 0) {
+                seconds = 59;
+                minutes -= 1;
+            }
+            if (minutes <= -1) {
+                seconds = 0;
+                minutes += 1;
+            }
+            else
+                seconds -= 1;
+            if (minutes <= 0) {
+                minutes = 59;
+                hours -= 1;
+            }
+            if (hours <= -1) {
+                minutes = 0;
+                hours += 1;
+            }
+            document.getElementById('lblTimeValue').innerHTML = hours + ":" + minutes + ":" + seconds;
+            if (hours == "0" & minutes == "0" & seconds == "10") {
+            }
+            if (hours == "0" & minutes == "0" & seconds == 0) {
+                alert('Your Default Time is Over. However, you can complete the Test with Extra Time');
+                checkTimeOut();
+            }
+            else {
+                setTimeout("display()", 1000);
+            }
+        }
+        function checkTimeOut() {
+            displayExtra();
+        }
+        function displayExtra() {
+            $('#lblTimeValue').css("color", "red");
+            $('#lblLeftTime').text('Extra Time : ');
+            seconds += 1;
+            if (seconds >= 60) {
+                seconds = 0;
+                minutes += 1;
+            }
+            if (minutes >= 60) {
+                seconds = 0;
+                minutes = 0;
+                hours += 1;
+            }
+            setTimeout("displayExtra()", 6000);
+            document.getElementById('lblTimeValue').innerHTML = hours + ":" + minutes + ":" + seconds;
+        }
+        function ChangeOptionColor(OptionId) {
+            var ChangeColorId = OptionId.split('-');
+
+            $("#ANS-" + ChangeColorId[1] + "-Option1").removeClass("sected_option");
+            $("#ANS-" + ChangeColorId[1] + "-Option2").removeClass("sected_option");
+            $("#ANS-" + ChangeColorId[1] + "-Option3").removeClass("sected_option");
+            $("#ANS-" + ChangeColorId[1] + "-Option4").removeClass("sected_option");
+
+            $("#ANS-" + ChangeColorId[1] + "-" + ChangeColorId[2]).addClass("sected_option");
+        }
+        function ExamSubmit() {
+           ConfirmSubmit();
+        }
+        
+        
+        function ConfirmSubmit() {
+            navigator.notification.confirm(
+               'Total QS:  '+ TotalQuestions + "\n" +'Attempted QS:  '+ $('.sected_option').length ,  // message
+                onConfirmSubmit,             // callback to invoke with index of button pressed
+                'Alert',            // title
+                'Ok,Cancel'          // buttonLabels
+            );
+        }
+        function onConfirmSubmit(button) {
+        		
+        	  if(button== '1'){
+        		  $('.loadingdiv').css('display','block');
+       		      $('button').attr('disabled','disabled');
+        		  $('.sected_option').each(function () {
+                       varExamSubmit += $('#' + this.id).attr('accesskey') + '#';
+                   });
+                   varExamSubmit = varExamSubmit.slice(0, -1);    
+        		  
+        		  $.ajax({
+                      type: "POST",
+                      contentType: "application/json; charset=utf-8",
+                      url: "http://www.beiitians.com/mobile/mobileAjax.aspx/mInsUpdExamResult",
+                      data: "{DailyExamSubmit: '" + varExamSubmit + "',ExamTypeId:'" + ExmTyp + "'}",
+
+                      datatype: "jsonp",
+                      async: false,
+                      success: function (data) {
+                      	document.location.href = 'mWMScoreCard.html?userId=' + UsrId + '&MasterId='+ MasterId+'&ExmTyp='+ ExmTyp;
+                      },
+                      error: function (result) { alert("Error"); }
+                  });
+        		  
+        		  
+                }
+             else if(button== '2'){}
+        }
+        
+        
+        
+        //When previous button clicks
+        function OnPrevious() {
+            var Id = $('.ShowQuestion').attr('id');
+            var StripId = $('.ShowQuestion').attr('id'); //strip
+            $('.active1').removeClass("active1");
+            Id = Id.replace('QNo', ''); //Id = Id.replace('QNo', '');
+            Id = parseInt(Id) - 1;
+
+            if (Id != 0) {
+                $('.ShowQuestion').removeClass('ShowQuestion').addClass('HideQuestion');
+                $('#QNo' + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#Strip" + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#question" + Id).addClass("active1");
+                //Strip
+            }
+            if (Id == 1)
+                $('.prev_btn').css('display', 'none');  //Disable previous button
+            $('.next_btn').css('display', 'block');  //Enable next button
+        }
+        //When next button clicks
+        function OnNext() {
+            $('.prev_btn').css('display', 'block'); //Display previous button
+            var Id = $('.ShowQuestion').attr('id');
+            Id = Id.replace('QNo', '');
+            Id = parseInt(Id) + 1;
+            if (TotalQuestions == Id) { $('.next_btn').css('display', 'none'); }
+            $('.active1').removeClass("active1");
+            if (Id != (parseInt($('#spnQuestionCount').text())) + 0) {
+                $('.ShowQuestion').removeClass('ShowQuestion').addClass('HideQuestion');
+                $('#QNo' + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#Strip" + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#question" + Id).addClass("active1");
+            }
+            else {
+                // Id = parseInt(Id) - 1;
+                $('.ShowQuestion').removeClass('ShowQuestion').addClass('HideQuestion');
+                $('#QNo' + Id).removeClass('HideQuestion').addClass('ShowQuestion');
+                $("#question" + Id).addClass("active1");
+            }
+        }
+        
+        function OnClose(){
+        	showConfirm();
+        }
+        
+        function showConfirm() {
+            navigator.notification.confirm(
+                'Are you sure close the Exam!',  // message
+                onConfirm,             // callback to invoke with index of button pressed
+                'Alert',            // title
+                'Ok,Cancel'          // buttonLabels
+            );
+        }
+        function onConfirm(button) {
+        	  if(button== '1'){
+        		        if(UsrId != 0){
+        		             document.location.href = 'mindex.html?userId=' + UsrId
+        	                 }
+                    }
+             else if(button== '2'){}
+        }
+        
+        // menus.....!!
+        function onLoad() {
+             	document.addEventListener("deviceready", onDeviceReady, false);
+             	document.addEventListener("backbutton", onBackKeyDown, false);
+             	
+                var onhome = function() {
+         	        console.log("settings");
+         	        ConfirmHome();
+         	     };
+           var onLogout = function() {
+         	        console.log("help");
+         	        ConfirmLogout();
+         	     
+         	     };
+         	 var onExit = function() {
+      	        console.log("Exit");
+      	        ConfirmExit();
+      	     };
+         	    var optionsmenu = new OptionsMenu({
+         	        id: "optionsmenu",
+         	        items: [ 
+         	            [ {
+         	                label: "Home",
+         	                image: "Mimages/home.png",
+         	                action: onhome
+         	            }, 
+         	            {
+         	                label: "logOut",
+         	                image: "Mimages/logout.png",
+         	                action: onLogout
+         	            },
+         	            {
+      	                label: "Exit",
+      	                image: "Mimages/close.png",
+      	                action: onExit
+      	            }]
+         	        ]
+         	    });	
+             	
+             }
+
+             // PhoneGap is loaded and it is now safe to make calls PhoneGap methods
+             //
+        function onDeviceReady() {
+                 // Register the event listener
+                 document.addEventListener("menubutton", onMenuKeyDown, false);
+                 document.addEventListener("backbutton", onBackKeyDown, false);
+                 
+             }
+             function onMenuKeyDown() {
+             	
+             }
+             
+             function onBackKeyDown() {
+            	
+            	  Confirmback();
+             }
+             // Show a custom confirmation dialog for Exit
+             //
+             function Confirmback() {
+                 navigator.notification.confirm(
+                     'Are you sure want exit the Exam',  // message
+                     onConfirmback,             // callback to invoke with index of button pressed
+                     'Alert',            // title
+                     'Ok,Cancel'          // buttonLabels
+                 );
+             }
+             function onConfirmback(button) {
+          	   if(button == '1')
+          		  if(UsrId != 0)
+                  {
+                     document.location.href = 'mPractice.html?userId=' + UsrId 
+                  }
+              	   
+                 else if(button == '2'){}
+             }
+          // Show a custom confirmation dialog for Home
+             //
+             function ConfirmHome() {
+                 navigator.notification.confirm(
+                     'Are you sure want go for Home!',  // message
+                     onConfirmHome,             // callback to invoke with index of button pressed
+                     'Alert',            // title
+                     'Ok,Cancel'          // buttonLabels
+                 );
+             }
+             function onConfirmHome(button) {
+          	   if(button == '1'){
+          		    if(UsrId != 0)
+                      {
+                         document.location.href = 'mindex.html?userId=' + UsrId 
+                      }
+          	   }
+                 else if(button == '2'){}
+             }
+             
+             // Show a custom confirmation dialog for Home
+             //
+             function ConfirmLogout() {
+                 navigator.notification.confirm(
+                     'Are you sure want logout!',  // message
+                     onConfirmLogout,             // callback to invoke with index of button pressed
+                     'Alert',            // title
+                     'Ok,Cancel'          // buttonLabels
+                 );
+             }
+             function onConfirmLogout(button) {
+          	   if(button == '1'){
+          		   document.location.href = 'mLogin.html' 
+          	   }
+                 else if(button == '2'){}
+             }
+        
+        
+    </script>
+</head>
+<body>
+    <div align="center" class='logo_div'>
+        <img src="Mimages/beiitianslogo.png" alt="logo" />
+    </div>
+    <label id="lblLeftTime">
+        Left Time :
+    </label>
+    <label id="lblTimeValue">
+    </label>
+    <div style=" width: 100%; margin: 0px;">
+        <div id='DIVAssignQInfo' style='width: 95%; float: left; background-color: White;
+            border: 1px solid;margin: 1px 2px 2px 2px;'>
+        </div>
+    </div>
+</body>
+</html>
